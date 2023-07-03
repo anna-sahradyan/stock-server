@@ -7,11 +7,13 @@ const cors = require("cors");
 const connectDB = require("./config/connectDB");
 const bodyParser = require("body-parser");
 const userRouter = require("./routes/user-router");
+const cookieParser = require("cookie-parser")
 const app = express();
 
 
 //?middlewares
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(express.json());
 app.use(cors({origin: true}));
 app.use(express.urlencoded({extended: false}));

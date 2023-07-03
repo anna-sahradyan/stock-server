@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const generateToken = (id) => {
     return jwt.sign({id}, process.env.JWT_SECRET, {expiresIn: "1d"});
 };
@@ -35,8 +36,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
             path: "/",
             httpOnly: true,
             expires: new Date(Date.now() + 1000 * 86400), //!1 day
-            sameSite:"none",
-            secure:true
+            sameSite: "none",
+            secure: true
         });
         if (user) {
             const {_id, name, email, photo, phone, bio} = user
@@ -59,8 +60,61 @@ const registerUser = asyncHandler(async (req, res, next) => {
         next(err);
     }
 });
+//?Login
+const loginUser = asyncHandler(async (req, res) => {
+    const {email, password} = req.body;
+    if (!email || !password) {
+        res.status(400);
+        throw new Error("Please add email and password");
+    }
+    //? Check if user exists
+    const user = await User.findOne({email})
+    if (!user) {
+        res.status(400);
+        throw new Error("User not found, please signup");
+    }
+    //?User exists, check if password is correct
+    const passwordIsCorrect = await bcrypt.compare(password, user.password);
+    const token = generateToken(user._id);
+    //? Send HTTP-only cookie
+    res.cookie("token", token, {
+        path: "/",
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000 * 86400), //!1 day
+        sameSite: "none",
+        secure: true
+    });
+    if (user && passwordIsCorrect) {
+        const {_id, name, email, photo, phone, bio} = user
+        res.status(200).json({
+            _id,
+            name,
+            email,
+            photo,
+            phone,
+            bio,
+            token
+        });
 
+    } else {
+        res.status(400);
+        throw new Error("Invalid email or password");
+    }
+});
+//?logOut
+const logOut = asyncHandler(async (req, res) => {
+    res.cookie("token", "", {
+        path: "/",
+        httpOnly: true,
+        expires: new Date(0), //!1 day
+        sameSite: "none",
+        secure: true
+    });
+    return res.status(200).json({message:"Successfully Logged Out"})
+})
 
 module.exports = {
-    registerUser
+    registerUser,
+    loginUser,
+    logOut
 }
