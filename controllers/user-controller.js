@@ -95,7 +95,6 @@ const loginUser = asyncHandler(async (req, res) => {
             bio,
             token
         });
-
     } else {
         res.status(400);
         throw new Error("Invalid email or password");
@@ -110,11 +109,42 @@ const logOut = asyncHandler(async (req, res) => {
         sameSite: "none",
         secure: true
     });
-    return res.status(200).json({message:"Successfully Logged Out"})
+    return res.status(200).json({message: "Successfully Logged Out"})
 })
-
+//?get user
+const getUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (user) {
+        const {_id, name, email, photo, phone, bio} = user
+        res.status(200).json({
+            _id,
+            name,
+            email,
+            photo,
+            phone,
+            bio,
+        });
+    } else {
+        res.status(400);
+        throw new Error("User Not Found");
+    }
+});
+//?Logged
+const loginStatus = asyncHandler(async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.json(false)
+    }
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    if (verified) {
+        return res.json(true);
+    }
+    return res.json(false);
+})
 module.exports = {
     registerUser,
     loginUser,
-    logOut
+    logOut,
+    getUser,
+    loginStatus
 }
