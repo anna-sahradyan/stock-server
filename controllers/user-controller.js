@@ -140,11 +140,66 @@ const loginStatus = asyncHandler(async (req, res) => {
         return res.json(true);
     }
     return res.json(false);
+});
+//?update user
+const updateUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if (user) {
+        const {name, email, photo, phone, bio} = user;
+        user.email = email;
+        user.phone = req.body.phone || phone;
+        user.photo = req.body.photo || photo;
+        user.name = req.body.name || name;
+        user.bio = req.body.bio || bio;
+        const updatedUser = await user.save();
+        res.status(200).json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            photo: updatedUser.photo,
+            phone: updatedUser.phone,
+            bio: updatedUser.bio,
+        })
+    } else {
+        res.status(404);
+        throw  new Error("User not found");
+    }
+
+});
+//?change password
+const changePassword = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    const {oldPassword, password} = req.body;
+    if (!user) {
+        res.status(400);
+        throw  new Error("User not found ,please signup");
+    }
+    //!validate
+    if (!oldPassword || !password) {
+        res.status(400);
+        throw  new Error("please add old and new password")
+    }
+    //!check if old  password matches password in DB
+    const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password);
+//!save new password
+    if (user && passwordIsCorrect) {
+        user.password = password
+        await user.save();
+        res.status(200).send("Password changes successful");
+    }
+    else{
+        res.status(400);
+        throw new Error("Old password is incorrect")
+    }
 })
 module.exports = {
+    changePassword,
     registerUser,
+    loginStatus,
+    updateUser,
     loginUser,
-    logOut,
     getUser,
-    loginStatus
+    logOut,
+
+
 }
