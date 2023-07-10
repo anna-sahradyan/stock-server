@@ -7,7 +7,8 @@ const cors = require("cors");
 const connectDB = require("./config/connectDB");
 const bodyParser = require("body-parser");
 const userRouter = require("./routes/user-router");
-const cookieParser = require("cookie-parser")
+const productRouter = require("./routes/product-router");
+const cookieParser = require("cookie-parser");
 const app = express();
 
 
@@ -19,9 +20,9 @@ app.use(cors({origin: true}));
 app.use(express.urlencoded({extended: false}));
 
 
-
 //?Router middleware
 app.use("/api/users", userRouter);
+app.use("/api/products", productRouter);
 //?DEPLOYMENT CODE
 app.get("/", (req, res) => {
     res.send("Home page")
